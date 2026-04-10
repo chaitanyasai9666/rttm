@@ -1,26 +1,31 @@
 import React, { useState, useEffect } from 'react';
 
 const Settings = () => {
-  const [keywords, setKeywords] = useState('');
   const [targetUrls, setTargetUrls] = useState('');
+  const [theme, setTheme] = useState('dark');
+  const [scrapeInterval, setScrapeInterval] = useState('60');
+  const [alertEmail, setAlertEmail] = useState('');
   const [statusMsg, setStatusMsg] = useState('');
 
   const fetchExistingData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || '';
       const headers = { 'Authorization': `Bearer ${token}` };
 
-      const [kwResp, urlResp] = await Promise.all([
-        fetch('http://localhost:5000/api/keywords', { headers }),
-        fetch('http://localhost:5000/api/target_urls', { headers })
-      ]);
-
-      if (kwResp.ok && urlResp.ok) {
-        const kwData = await kwResp.json();
+      // Fetch URLs
+      const urlResp = await fetch('http://localhost:5000/api/target_urls', { headers });
+      if (urlResp.ok) {
         const urlData = await urlResp.json();
-        
-        setKeywords(kwData.map(k => k.keyword).join(', '));
         setTargetUrls(urlData.map(u => u.url).join('\n'));
+      }
+
+      // Fetch Settings
+      const setResp = await fetch('http://localhost:5000/api/settings', { headers });
+      if (setResp.ok) {
+        const setData = await setResp.json();
+        if (setData.theme) setTheme(setData.theme);
+        if (setData.scrape_interval) setScrapeInterval(setData.scrape_interval);
+        if (setData.alert_email) setAlertEmail(setData.alert_email);
       }
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -31,55 +36,119 @@ const Settings = () => {
     fetchExistingData();
   }, []);
 
+  // Sync theme with document class
+  useEffect(() => {
+    if (theme === 'light') {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+  }, [theme]);
+
   const handleSave = async () => {
     setStatusMsg('Saving...');
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || '';
     const headers = { 
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}` 
     };
 
     try {
-      const kwList = keywords.split(',').map(s => s.trim()).filter(s => s);
+      // 1. Target URLs sync logic (Clear and rewrite)
       const urlList = targetUrls.split('\n').map(s => s.trim()).filter(s => s);
+      
+      // Since our API currently adds one by one, and we don't have a specific bulk-clear API
+      // We will perform a simple cleanup approach. In a fully optimized app, we'd add an endpoint for bulk sync.
+      // For this step-by-step logic, we will fetch IDs and delete them.
+      const urlResp = await fetch('http://localhost:5000/api/target_urls', { headers });
+      const currentUrls = await urlResp.json();
+      const deletePromises = currentUrls.map(u => 
+        fetch('http://localhost:5000/api/target_urls', { method: 'DELETE', headers, body: JSON.stringify({ id: u.id }) })
+      );
+      await Promise.all(deletePromises);
 
-      // Append new items to our SQLite tables.
-      const promises = [];
-      for (const kw of kwList) {
-        promises.push(fetch('http://localhost:5000/api/keywords', { method: 'POST', headers, body: JSON.stringify({ keyword: kw }) }));
-      }
-      for (const url of urlList) {
-        promises.push(fetch('http://localhost:5000/api/target_urls', { method: 'POST', headers, body: JSON.stringify({ url: url }) }));
-      }
+      const addPromises = urlList.map(url => 
+        fetch('http://localhost:5000/api/target_urls', { method: 'POST', headers, body: JSON.stringify({ url: url }) })
+      );
+      await Promise.all(addPromises);
 
-      await Promise.all(promises);
+      // 2. Settings key-value pairs
+      const settingsPayload = {
+        theme: theme,
+        scrape_interval: scrapeInterval,
+        alert_email: alertEmail
+      };
+      
+      await fetch('http://localhost:5000/api/settings', { 
+        method: 'POST', 
+        headers, 
+        body: JSON.stringify(settingsPayload) 
+      });
+
       setStatusMsg('Configuration saved successfully!');
       setTimeout(() => setStatusMsg(''), 3000);
-      fetchExistingData(); // Refresh our data
+      fetchExistingData(); // Refresh to catch actual state
     } catch (err) {
+      console.error(err);
       setStatusMsg('Failed to save configuration.');
     }
   };
 
   return (
-    <div className="card log-card" style={{ maxWidth: '600px' }}>
+    <div className="card log-card" style={{ maxWidth: '700px', margin: '0 auto' }}>
       <h3 style={{ marginBottom: '24px' }}>System Configuration</h3>
       <form style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Keywords to Monitor (comma separated)</label>
-          <textarea 
-            rows="3" 
-            value={keywords}
-            onChange={(e) => setKeywords(e.target.value)}
-            placeholder="e.g., project voldemort, internal confidential, API_KEY"
+          <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Theme Mode</label>
+          <select 
+            value={theme}
+            onChange={(e) => setTheme(e.target.value)}
             style={{
               width: '100%', padding: '12px', borderRadius: '6px',
               backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)', fontFamily: 'inherit', resize: 'vertical'
+              color: 'var(--text-primary)', fontFamily: 'inherit'
             }}
-          />
+          >
+            <option value="dark">Dark Theme</option>
+            <option value="light">Light Theme</option>
+          </select>
         </div>
-        
+
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Scraping Interval</label>
+            <select 
+              value={scrapeInterval}
+              onChange={(e) => setScrapeInterval(e.target.value)}
+              style={{
+                width: '100%', padding: '12px', borderRadius: '6px',
+                backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)', fontFamily: 'inherit'
+              }}
+            >
+              <option value="30">Every 30 seconds</option>
+              <option value="60">Every 60 seconds</option>
+              <option value="300">Every 5 minutes</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 2 }}>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Alert Email Address</label>
+            <input 
+              type="email"
+              value={alertEmail}
+              onChange={(e) => setAlertEmail(e.target.value)}
+              placeholder="operator@company.com"
+              style={{
+                width: '100%', padding: '12px', borderRadius: '6px',
+                backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)', fontFamily: 'inherit'
+              }}
+            />
+          </div>
+        </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Target URLs (newline separated)</label>
           <textarea 
@@ -104,7 +173,7 @@ const Settings = () => {
               backgroundColor: 'var(--status-secure)', color: '#000',
               border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer'
             }}>
-            Save Configuration
+            Save Settings
           </button>
           {statusMsg && <span style={{ color: 'var(--text-primary)' }}>{statusMsg}</span>}
         </div>

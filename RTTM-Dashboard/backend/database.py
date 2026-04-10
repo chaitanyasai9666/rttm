@@ -36,6 +36,17 @@ def init_db():
     )
     ''')
 
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS alerts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        keyword TEXT NOT NULL,
+        source TEXT NOT NULL,
+        url TEXT NOT NULL
+    )
+    ''')
+
+
     # Seed admin user if it doesn't exist
     cursor.execute('SELECT id FROM users WHERE username = ?', ('admin',))
     if not cursor.fetchone():

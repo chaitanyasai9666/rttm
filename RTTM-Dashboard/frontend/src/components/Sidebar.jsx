@@ -16,6 +16,11 @@ const Sidebar = () => {
             </NavLink>
           </li>
           <li>
+            <NavLink to="/keywords" className={({ isActive }) => (isActive ? 'active-link' : '')}>
+              Keywords
+            </NavLink>
+          </li>
+          <li>
             <NavLink to="/alerts" className={({ isActive }) => (isActive ? 'active-link' : '')}>
               <span>Alerts</span>
               <span className="badge badge-alert">3</span>

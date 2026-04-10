@@ -1,25 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import './Header.css';
 
 const Header = () => {
-  const [apiStatus, setApiStatus] = useState('Connecting...');
-  
-  useEffect(() => {
-    fetch('/api/health')
-      .then(res => res.json())
-      .then(data => {
-        setApiStatus(data.status);
-      })
-      .catch(err => {
-        setApiStatus('Offline');
-      });
-  }, []);
-
   return (
     <header className="header">
       <div className="header-status">
-        <div className={`status-indicator ${apiStatus === 'Offline' ? 'offline' : 'online'}`}></div>
-        <span>{apiStatus}</span>
+        {/* Intentionally left blank as requested to remove the Backend Active badge */}
       </div>
       
       <div className="header-profile">
