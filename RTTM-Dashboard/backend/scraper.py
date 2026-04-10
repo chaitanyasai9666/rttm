@@ -11,11 +11,34 @@ def scrape_and_match():
         urls = conn.execute('SELECT url FROM target_urls').fetchall()
         keywords = conn.execute('SELECT keyword FROM keywords').fetchall()
 
-        if not urls or not keywords:
-            print("[Scraper] Missing URLs or Keywords. Skipping cycle.")
+        if not urls and not keywords:
+            print("[Scraper] Missing URLs and Keywords. Skipping cycle.")
             return
 
-        keyword_list = [k['keyword'].lower() for k in keywords]
+        keyword_list = [k['keyword'].lower() for k in keywords] if keywords else []
+        
+        # As requested: "give a random site url for now and i need the key word to appear in threat matches"
+        if keyword_list:
+            import random
+            dummy_urls = [
+                "https://pastebin.com/raw/xhf73a", 
+                "https://darkweb.onion/db/leak", 
+                "https://github.com/random/leaked_creds", 
+                "https://t.me/hack_logs/42",
+                "https://anonfiles.com/abc123yz/db_dump"
+            ]
+            random_kw = random.choice(keyword_list)
+            random_url = random.choice(dummy_urls)
+            parsed_uri = urlparse(random_url)
+            source = f"{parsed_uri.netloc} (Simulation)"
+            
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO alerts (keyword, source, url)
+                VALUES (?, ?, ?)
+            ''', (random_kw, source, random_url))
+            conn.commit()
+            print(f"[Scraper] [DUMMY ALERT] Keyword '{random_kw}' mock-found at {random_url}")
 
         for url_row in urls:
             url = url_row['url']
