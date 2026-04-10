@@ -3,6 +3,7 @@ import './DashboardLayout.css';
 
 const DashboardLayout = () => {
   const [activeKeywords, setActiveKeywords] = useState([]);
+  const [recentAlerts, setRecentAlerts] = useState([]);
 
   useEffect(() => {
     const fetchKeywords = async () => {
@@ -15,8 +16,16 @@ const DashboardLayout = () => {
           const data = await response.json();
           setActiveKeywords(data);
         }
+
+        const alertResp = await fetch('http://localhost:5000/api/alerts', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (alertResp.ok) {
+          const alertData = await alertResp.json();
+          setRecentAlerts(alertData);
+        }
       } catch (err) {
-        console.error("Failed to fetch keywords", err);
+        console.error("Failed to fetch dashboard data", err);
       }
     };
     fetchKeywords();
@@ -85,24 +94,28 @@ const DashboardLayout = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>2026-04-10 12:23:45</td>
-                <td><span className="badge badge-warning">project x</span></td>
-                <td>pastebin</td>
-                <td><a href="#" className="link-text">https://pastebin.com/xyzt</a></td>
-              </tr>
-              <tr>
-                <td>2026-04-10 11:54:12</td>
-                <td><span className="badge badge-warning">API_KEY</span></td>
-                <td>github_gists</td>
-                <td><a href="#" className="link-text">https://gist.github.com/abc</a></td>
-              </tr>
-              <tr>
-                <td>2026-04-10 10:40:05</td>
-                <td><span className="badge badge-warning">internal comms</span></td>
-                <td>darkweb_forum</td>
-                <td><span className="link-text text-secondary">onion://hidden...</span></td>
-              </tr>
+              {recentAlerts.length === 0 ? (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    No recent threats detected.
+                  </td>
+                </tr>
+              ) : (
+                recentAlerts.map(alert => (
+                  <tr key={alert.id}>
+                    <td>{new Date(alert.timestamp).toLocaleString()}</td>
+                    <td>
+                      <span className="badge badge-warning">{alert.keyword}</span>
+                    </td>
+                    <td>{alert.source}</td>
+                    <td>
+                      <a href={alert.url} target="_blank" rel="noopener noreferrer" className="link-text" style={{ wordBreak: 'break-all' }}>
+                        {alert.url}
+                      </a>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

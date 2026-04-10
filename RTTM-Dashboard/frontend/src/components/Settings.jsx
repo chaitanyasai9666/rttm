@@ -36,7 +36,7 @@ const Settings = () => {
     fetchExistingData();
   }, []);
 
-  // Sync theme with document class
+  // Sync theme with document class immediately
   useEffect(() => {
     if (theme === 'light') {
       document.body.classList.add('light-theme');
@@ -54,23 +54,13 @@ const Settings = () => {
     };
 
     try {
-      // 1. Target URLs sync logic (Clear and rewrite)
+      // 1. Target URLs bulk sync
       const urlList = targetUrls.split('\n').map(s => s.trim()).filter(s => s);
-      
-      // Since our API currently adds one by one, and we don't have a specific bulk-clear API
-      // We will perform a simple cleanup approach. In a fully optimized app, we'd add an endpoint for bulk sync.
-      // For this step-by-step logic, we will fetch IDs and delete them.
-      const urlResp = await fetch('http://localhost:5000/api/target_urls', { headers });
-      const currentUrls = await urlResp.json();
-      const deletePromises = currentUrls.map(u => 
-        fetch('http://localhost:5000/api/target_urls', { method: 'DELETE', headers, body: JSON.stringify({ id: u.id }) })
-      );
-      await Promise.all(deletePromises);
-
-      const addPromises = urlList.map(url => 
-        fetch('http://localhost:5000/api/target_urls', { method: 'POST', headers, body: JSON.stringify({ url: url }) })
-      );
-      await Promise.all(addPromises);
+      await fetch('http://localhost:5000/api/target_urls/sync', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(urlList)
+      });
 
       // 2. Settings key-value pairs
       const settingsPayload = {
@@ -84,6 +74,9 @@ const Settings = () => {
         headers, 
         body: JSON.stringify(settingsPayload) 
       });
+
+      // Cache theme instantly for refreshes
+      localStorage.setItem('theme', theme);
 
       setStatusMsg('Configuration saved successfully!');
       setTimeout(() => setStatusMsg(''), 3000);

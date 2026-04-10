@@ -169,6 +169,34 @@ def manage_urls():
         conn.close()
         return jsonify({'message': 'URL removed'})
 
+@app.route('/api/target_urls/sync', methods=['POST'])
+@token_required
+def sync_urls():
+    data = request.json
+    if not isinstance(data, list):
+        return jsonify({'error': 'Expected list of URLs'}), 400
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM target_urls')
+        for url in data:
+            if url.strip():
+                cursor.execute('INSERT INTO target_urls (url) VALUES (?)', (url.strip(),))
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'URLs synced successfully'})
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/alerts', methods=['GET'])
+@token_required
+def get_alerts():
+    conn = get_db_connection()
+    alerts = conn.execute('SELECT id, timestamp, keyword, source, url FROM alerts ORDER BY timestamp DESC LIMIT 100').fetchall()
+    conn.close()
+    return jsonify([dict(a) for a in alerts])
+
 @app.route('/api/settings', methods=['GET', 'POST'])
 @token_required
 def manage_settings():
