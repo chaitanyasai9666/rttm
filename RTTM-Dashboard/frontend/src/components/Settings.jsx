@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const Settings = () => {
   const [targetUrls, setTargetUrls] = useState('');
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const [scrapeInterval, setScrapeInterval] = useState('60');
   const [alertEmail, setAlertEmail] = useState('');
   const [statusMsg, setStatusMsg] = useState('');
@@ -94,18 +94,37 @@ const Settings = () => {
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Theme Mode</label>
-          <select 
-            value={theme}
-            onChange={(e) => setTheme(e.target.value)}
-            style={{
-              width: '100%', padding: '12px', borderRadius: '6px',
-              backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)', fontFamily: 'inherit'
-            }}
-          >
-            <option value="dark">Dark Theme</option>
-            <option value="light">Light Theme</option>
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <button
+              type="button"
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              style={{
+                position: 'relative',
+                width: '60px',
+                height: '30px',
+                borderRadius: '15px',
+                border: 'none',
+                backgroundColor: theme === 'light' ? '#4CAF50' : '#888',
+                cursor: 'pointer',
+                transition: 'background-color 0.3s'
+              }}
+            >
+              <div style={{
+                position: 'absolute',
+                top: '2px',
+                left: theme === 'light' ? '32px' : '2px',
+                width: '26px',
+                height: '26px',
+                borderRadius: '50%',
+                backgroundColor: 'white',
+                transition: 'left 0.3s',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              }} />
+            </button>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
+              {theme === 'light' ? 'Light Theme' : 'Dark Theme'}
+            </span>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '16px' }}>

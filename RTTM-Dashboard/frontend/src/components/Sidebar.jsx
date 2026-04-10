@@ -40,7 +40,26 @@ const Sidebar = () => {
           </li>
         </ul>
       </nav>
-      <div className="sidebar-footer">
+      <div className="sidebar-footer" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <button 
+          onClick={handleLogout} 
+          style={{
+            padding: '10px', 
+            backgroundColor: 'rgba(255, 60, 60, 0.1)', 
+            color: '#ff4d4d', 
+            border: '1px solid rgba(255, 60, 60, 0.4)', 
+            borderRadius: '6px', 
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            width: '100%',
+            transition: 'background-color 0.2s',
+            boxSizing: 'border-box'
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = 'rgba(255, 60, 60, 0.2)'}
+          onMouseOut={(e) => e.target.style.backgroundColor = 'rgba(255, 60, 60, 0.1)'}
+        >
+          Logout
+        </button>
         <p>v1.0.0 Alpha</p>
       </div>
     </div>
