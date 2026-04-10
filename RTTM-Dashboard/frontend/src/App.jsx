@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import DashboardLayout from './components/DashboardLayout';
@@ -19,6 +19,13 @@ const ProtectedRoute = ({ children }) => {
 
 // Layout wrapper for authenticated pages
 const MainLayout = ({ children }) => {
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      document.body.classList.add('light-theme');
+    }
+  }, []);
+
   return (
     <div className="app-container">
       <Sidebar />
