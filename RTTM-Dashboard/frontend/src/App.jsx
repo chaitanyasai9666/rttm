@@ -5,6 +5,7 @@ import Header from './components/Header';
 import DashboardLayout from './components/DashboardLayout';
 import Alerts from './components/Alerts';
 import Settings from './components/Settings';
+import Keywords from './components/Keywords';
 import Login from './components/Login';
 
 // Protected Route Component
@@ -43,6 +44,12 @@ function App() {
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <MainLayout><DashboardLayout /></MainLayout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/keywords" element={
+          <ProtectedRoute>
+            <MainLayout><Keywords /></MainLayout>
           </ProtectedRoute>
         } />
         
