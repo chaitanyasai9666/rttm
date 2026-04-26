@@ -29,8 +29,7 @@ const Sidebar = () => {
           </li>
           <li>
             <NavLink to="/alerts" className={({ isActive }) => (isActive ? 'active-link' : '')}>
-              <span>Alerts</span>
-              <span className="badge badge-alert">3</span>
+              Alerts
             </NavLink>
           </li>
           <li>

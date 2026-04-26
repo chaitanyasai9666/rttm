@@ -1,9 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import LiveScanButton from './LiveScanButton';
+import TargetScanButton from './TargetScanButton';
+import AutoScanControl from './AutoScanControl';
 import './DashboardLayout.css';
 
 const DashboardLayout = () => {
   const [activeKeywords, setActiveKeywords] = useState([]);
   const [recentAlerts, setRecentAlerts] = useState([]);
+
+  const fetchAlerts = async () => {
+    try {
+      const token = localStorage.getItem('token') || '';
+      const alertResp = await fetch('http://localhost:5000/api/alerts', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (alertResp.ok) {
+        const alertData = await alertResp.json();
+        setRecentAlerts(alertData);
+      }
+    } catch (err) {
+      console.error("Failed to fetch alerts", err);
+    }
+  };
 
   useEffect(() => {
     const fetchKeywords = async () => {
@@ -16,19 +34,13 @@ const DashboardLayout = () => {
           const data = await response.json();
           setActiveKeywords(data);
         }
-
-        const alertResp = await fetch('http://localhost:5000/api/alerts', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (alertResp.ok) {
-          const alertData = await alertResp.json();
-          setRecentAlerts(alertData);
-        }
       } catch (err) {
-        console.error("Failed to fetch dashboard data", err);
+        console.error("Failed to fetch dashboard keywords", err);
       }
     };
+    
     fetchKeywords();
+    fetchAlerts();
   }, []);
 
   const getPriorityColor = (priority) => {
@@ -82,6 +94,10 @@ const DashboardLayout = () => {
 
       {/* Bottom row: Live Logs or Tables */}
       <div className="card log-card full-width">
+        <LiveScanButton onScanComplete={fetchAlerts} />
+        <TargetScanButton onScanComplete={fetchAlerts} />
+        <AutoScanControl />
+        
         <h3 style={{ marginBottom: '16px' }}>Recent Threat Matches</h3>
         <div className="table-container">
           <table className="threat-table">
