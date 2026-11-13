@@ -54,7 +54,8 @@ if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
 app = Flask(__name__)
 CORS(app)
 
-SECRET_KEY = "REMOVED_RTTM_SECRET_KEY"
+# Signs the login tokens. Read from the environment so it is never committed.
+SECRET_KEY = os.environ.get("RTTM_SECRET_KEY") or sys.exit("Set RTTM_SECRET_KEY (see .env.example)")
 
 import sqlite3
 
@@ -442,9 +443,12 @@ def send_alert_email(keyword, url, receiver_email):
     """
     Sends an automated email alert when a threat match is found.
     """
-    # Hardcoded credentials as requested
-    SENDER_EMAIL = "REMOVED_RTTM_SENDER_EMAIL"
-    APP_PASSWORD = "REMOVED_RTTM_APP_PASSWORD"
+    # Credentials come from the environment, never from the code
+    SENDER_EMAIL = os.environ.get("RTTM_SENDER_EMAIL", "")
+    APP_PASSWORD = os.environ.get("RTTM_APP_PASSWORD", "")
+    if not (SENDER_EMAIL and APP_PASSWORD):
+        print("Email not sent: set RTTM_SENDER_EMAIL and RTTM_APP_PASSWORD")   # a scan must not crash over email
+        return
     
     try:
         msg = EmailMessage()

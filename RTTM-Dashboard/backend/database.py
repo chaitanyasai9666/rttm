@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import sys
 from werkzeug.security import generate_password_hash
 
 # Path to the SQLite database file
@@ -62,7 +63,9 @@ def init_db():
     # Seed a default admin user if the database is empty
     cursor.execute('SELECT id FROM users WHERE username = ?', ('admin',))
     if not cursor.fetchone():
-        hashed = generate_password_hash("REMOVED_RTTM_ADMIN_PASSWORD")
+        # The first admin password comes from the environment, never from the code
+        admin_password = os.environ.get("RTTM_ADMIN_PASSWORD") or sys.exit("Set RTTM_ADMIN_PASSWORD (see .env.example)")
+        hashed = generate_password_hash(admin_password)
         cursor.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", ('admin', hashed))
         print("Seeded default admin user")
 

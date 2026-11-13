@@ -37,3 +37,9 @@ logs/
 *.njsproj
 *.sln
 *.sw?
+
+# Local data and secrets: never commit these
+*.db
+.env
+.env.*
+!.env.example
